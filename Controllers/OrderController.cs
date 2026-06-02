@@ -57,32 +57,54 @@ namespace CommerceSystemAPI.Controllers
         [HttpPost("PlaceOrder")]
         public IActionResult PlaceOrder(PlaceOrderDTO dto)
         {
+            decimal totalAmount = 0;
+
             Order order = new Order()
             {
                 UserId = dto.UserId,
                 OrderDate = DateTime.Now
             };
+
             context.Orders.Add(order);
             context.SaveChanges();
+
             foreach (var item in dto.Items)
             {
-                
-                    OrderProducts orderProduct = new OrderProducts()
-                    {
-                        OrderId = order.OrderId,
-                        ProductId = item.ProductId,
-                        Quantity = item.Quantity
-                    };
+                var product = context.Products.Find(item.ProductId);
+
+                if (product == null)
+                {
+                    return BadRequest("Product Not Found");
+                }
+
+                if (product.Stock < item.Quantity)
+                {
+                    return BadRequest($"Insufficient stock for product {product.ProductName}");
+                }
+
+                totalAmount += product.Price * item.Quantity;
+
+                product.Stock -= item.Quantity;
+
+                OrderProducts orderProduct = new OrderProducts()
+                {
+                    OrderId = order.OrderId,
+                    ProductId = item.ProductId,
+                    Quantity = item.Quantity
+                };
 
                 context.OrderProductss.Add(orderProduct);
             }
+
+            order.TotalAmount = totalAmount;
 
             context.SaveChanges();
 
             return Ok(new
             {
                 Message = "Order Placed Successfully",
-                OrderId = order.OrderId
+                OrderId = order.OrderId,
+                TotalAmount = order.TotalAmount
             });
         }
 
