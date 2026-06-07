@@ -19,6 +19,11 @@ namespace CommerceSystemAPI.Controllers
         [HttpPost("AddProduct")]
         public IActionResult AddProduct(ProductCreateDTO dto)
         {
+            if (_context.Products.Any(p =>
+            p.ProductName == dto.ProductName))
+            {
+                return BadRequest("Product already exists");
+            }
             Product product = new Product()
             {
                 ProductName = dto.ProductName,
@@ -79,13 +84,30 @@ namespace CommerceSystemAPI.Controllers
         public IActionResult FilterProducts(string search, decimal minPrice, decimal maxPrice, int pageNumber, int pageSize)
 
         {
+            if (pageNumber < 1)
+            {
+                pageNumber = 1;
+            }
+
+            if (pageSize < 1)
+            {
+                pageSize = 10;
+            }
             var products = _context.Products
-           .Where(p => p.ProductName.Contains(search) &&
-            p.Price >= minPrice &&
-            p.Price <= maxPrice)
-            .Skip((pageNumber - 1) * pageSize)
-           .Take(pageSize)
-           .ToList();
+           .Where(p =>
+          (string.IsNullOrEmpty(search) ||
+          p.ProductName.Contains(search))
+        &&
+         p.Price >= minPrice
+        &&
+        p.Price <= maxPrice)
+          .Skip((pageNumber - 1) * pageSize)
+          .Take(pageSize)
+          .ToList();
+           if (!products.Any())
+            {
+                return NotFound("No Products Found");
+            }
             return Ok(products);
            
         }
@@ -99,6 +121,12 @@ namespace CommerceSystemAPI.Controllers
             {
                 return NotFound("product not found");
 
+            }
+            if (_context.Products.Any(p =>
+            p.ProductName == dto.ProductName &&
+            p.ProductId != id))
+            {
+                return BadRequest("Product already exists");
             }
             prod.ProductName=dto.ProductName;
             prod.Description= dto.Description;

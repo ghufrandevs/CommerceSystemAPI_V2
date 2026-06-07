@@ -108,9 +108,14 @@ namespace CommerceSystemAPI.Controllers
         }
         [Authorize]
         [HttpPut("UpdateReview")]
-        public IActionResult UpdateReview(int id, Review review)
+        public IActionResult UpdateReview(int id, ReviewUpdateDTO dto)
         {
             var rev = _context.Reviews.Find(id);
+
+            if (rev == null)
+            {
+                return NotFound("Review Not Found");
+            }
 
             int userId = int.Parse(
             User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -120,16 +125,19 @@ namespace CommerceSystemAPI.Controllers
                 return Forbid();
             }
 
-            if (rev == null)
-            {
-                return NotFound("Review Not Found");
-            }
-
-            rev.Rating = review.Rating;
-            rev.Comment = review.Comment;
-            rev.ReviewDate = review.ReviewDate;
+            rev.Rating = dto.Rating;
+            rev.Comment = dto.Comment;
+            rev.ReviewDate = DateTime.Now;
 
             _context.Reviews.Update(rev);
+
+            _context.SaveChanges();
+            var product = _context.Products.Find(rev.ProductId);
+
+            product.OverallRating = (decimal)_context.Reviews
+                .Where(r => r.ProductId == rev.ProductId)
+                .Average(r => r.Rating);
+
             _context.SaveChanges();
 
             return Ok("Review Updated Successfully");
@@ -153,9 +161,25 @@ namespace CommerceSystemAPI.Controllers
             {
                 return Forbid();
             }
+            int productId = review.ProductId;
             _context.Reviews.Remove(review);
             _context.SaveChanges();
+            var product = _context.Products.Find(productId);
 
+            var reviews = _context.Reviews
+                .Where(r => r.ProductId == productId);
+
+            if (reviews.Any())
+            {
+                product.OverallRating =
+                    (decimal)reviews.Average(r => r.Rating);
+            }
+            else
+            {
+                product.OverallRating = 0;
+            }
+
+            _context.SaveChanges();
             return Ok("Review Deleted Successfully");
         }
 

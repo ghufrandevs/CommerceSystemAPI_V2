@@ -26,8 +26,7 @@ namespace CommerceSystemAPI.Middleware
 
                 var response = new
                 {
-                    Message = "Something went wrong",
-                    Error = ex.Message
+                    Message = "Something went wrong"
                 };
 
                 await context.Response.WriteAsync(

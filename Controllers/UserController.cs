@@ -3,6 +3,7 @@ using CommerceSystemAPI.Models;
 using CommerceSystemAPI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 namespace CommerceSystemAPI.Controllers
 {
     [ApiController]
@@ -14,11 +15,13 @@ namespace CommerceSystemAPI.Controllers
 
         private readonly PasswordService _passwordService;
         private readonly JwtService _jwtService;
-        public UserController(AppDbContext context, PasswordService passwordService, JwtService jwtService)
+        private readonly EmailService _emailService;
+        public UserController(AppDbContext context, PasswordService passwordService, JwtService jwtService, EmailService emailService)
         {
             _context = context;
             _passwordService = passwordService;
             _jwtService = jwtService;
+            _emailService = emailService;
         }
         [AllowAnonymous]
         [HttpPost("Register")]
@@ -27,6 +30,11 @@ namespace CommerceSystemAPI.Controllers
             if (_context.Users.Any(u => u.UserEmail == dto.UserEmail))
             {
                 return BadRequest("This Email Already Exists");
+            }
+
+            if (_context.Users.Any(u => u.UserPhone == dto.UserPhone))
+            {
+                return BadRequest("This Phone Number Already Exists");
             }
 
             User user = new User()
@@ -42,7 +50,10 @@ namespace CommerceSystemAPI.Controllers
 
             _context.Users.Add(user);
             _context.SaveChanges();
-
+            _emailService.SendEmail(
+            user.UserEmail,
+           "Welcome",
+           $"Hello {user.UserName}, your account has been created successfully.");
             return Ok("Account Created Successfully");
         }
         [AllowAnonymous]
@@ -83,15 +94,7 @@ namespace CommerceSystemAPI.Controllers
             });
         }
 
-        [HttpPost("AddUser")]
-        public IActionResult AddUser(User user) 
-        {
-            _context.Users.Add(user);
-            _context.SaveChanges();
-
-            return Ok("User Added Successfully");
-
-        }
+       
         [Authorize(Roles = "Admin")]
         [HttpGet("GetAllUsers")]
         public IActionResult GetAllUsers() 
@@ -131,21 +134,49 @@ namespace CommerceSystemAPI.Controllers
         }
         [Authorize]
         [HttpPut("UpdateUser")]
-        public IActionResult UpdateUser(int id, User user)
+        public IActionResult UpdateUser(int id, UserUpdateDTO dto)
         {
             var usr = _context.Users.Find(id);
+
+            int loggedInUserId = int.Parse(
+            User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+            bool isAdmin = User.IsInRole("Admin");
 
             if (usr == null)
             {
                 return NotFound("User Not Found");
             }
+            //check Email
+            if (_context.Users.Any(u =>
+            u.UserEmail == dto.UserEmail &&
+            u.UserId != id))
+            {
+                return BadRequest("Email already exists");
+            }
+            // Check Phone Number
+            if (_context.Users.Any(u =>
+                u.UserPhone == dto.UserPhone &&
+                u.UserId != id))
+            {
+                return BadRequest("This Phone Number Already Exists");
+            }
 
-            usr.UserName = user.UserName;
-            usr.UserEmail = user.UserEmail;
-            usr.UserPassword = user.UserPassword;
-            usr.UserPhone = user.UserPhone;
-            usr.Role = user.Role;
-            usr.IsActive = user.IsActive;
+            if (!isAdmin && loggedInUserId != id)
+            {
+                return Forbid();
+            }
+
+            usr.UserName = dto.UserName;
+            usr.UserEmail = dto.UserEmail;
+            usr.UserPassword =  _passwordService.HashPassword(dto.UserPassword);
+            usr.UserPhone = dto.UserPhone;
+
+            if (isAdmin)
+            {
+                usr.Role = dto.Role;
+                usr.IsActive = dto.IsActive;
+            }
 
             _context.Users.Update(usr);
             _context.SaveChanges();

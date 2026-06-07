@@ -13,6 +13,7 @@ namespace CommerceSystemAPI
         public static void Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
     .WriteTo.File(
         "Logs/log-.txt",
         rollingInterval: RollingInterval.Day)
@@ -33,6 +34,7 @@ namespace CommerceSystemAPI
 
             builder.Services.AddScoped<PasswordService>();
             builder.Services.AddScoped<JwtService>();
+            builder.Services.AddScoped<EmailService>();
             var jwtKey = builder.Configuration["Jwt:Key"]!;
             builder.Services.AddAuthentication(options =>
             {
@@ -106,8 +108,11 @@ namespace CommerceSystemAPI
             //running phase
             // Configure the HTTP request pipeline.
 
-            app.UseSwagger();
-            app.UseSwaggerUI();
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
 
             app.UseHttpsRedirection();
 

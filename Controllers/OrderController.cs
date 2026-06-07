@@ -3,7 +3,6 @@ using CommerceSystemAPI.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Diagnostics.Metrics;
 using System.Security.Claims;
 
 namespace CommerceSystemAPI.Controllers
@@ -60,63 +59,93 @@ namespace CommerceSystemAPI.Controllers
         public IActionResult PlaceOrder(PlaceOrderDTO dto)
         {
             int userId = int.Parse(
-        User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+                User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
             var user = _context.Users.Find(userId);
+
             if (user == null)
             {
                 return BadRequest("User Not Found");
             }
+            var duplicateProducts = dto.Items
+           .GroupBy(i => i.ProductId)
+           .Any(g => g.Count() > 1);
+
+            if (duplicateProducts)
+            {
+                return BadRequest(
+                    "Duplicate products are not allowed in the same order");
+            }
             decimal totalAmount = 0;
 
-            Order order = new Order()
+            using var transaction = _context.Database.BeginTransaction();
+
+            try
             {
-                UserId = userId,
-
-                OrderDate = DateTime.Now
-            };
-
-            _context.Orders.Add(order);
-            _context.SaveChanges();
-
-            foreach (var item in dto.Items)
-            {
-                var product = _context.Products.Find(item.ProductId);
-
-                if (product == null)
+                // Validation Phase
+                foreach (var item in dto.Items)
                 {
-                    return BadRequest("Product Not Found");
+                    var product = _context.Products.Find(item.ProductId);
+
+                    if (product == null)
+                    {
+                        return BadRequest("Product Not Found");
+                    }
+
+                    if (product.Stock < item.Quantity)
+                    {
+                        return BadRequest(
+                            $"Insufficient stock for product {product.ProductName}");
+                    }
                 }
 
-                if (product.Stock < item.Quantity)
+                // Create Order
+                Order order = new Order()
                 {
-                    return BadRequest($"Insufficient stock for product {product.ProductName}");
-                }
-
-                totalAmount += product.Price * item.Quantity;
-
-                product.Stock -= item.Quantity;
-
-                OrderProducts orderProduct = new OrderProducts()
-                {
-                    OrderId = order.OrderId,
-                    ProductId = item.ProductId,
-                    Quantity = item.Quantity
+                    UserId = userId,
+                    OrderDate = DateTime.Now
                 };
 
-                _context.OrderProductss.Add(orderProduct);
+                _context.Orders.Add(order);
+                _context.SaveChanges();
+
+                // Execute Order
+                foreach (var item in dto.Items)
+                {
+                    var product = _context.Products.Find(item.ProductId);
+
+                    totalAmount += product.Price * item.Quantity;
+
+                    product.Stock -= item.Quantity;
+
+                    OrderProducts orderProduct = new OrderProducts()
+                    {
+                        OrderId = order.OrderId,
+                        ProductId = item.ProductId,
+                        Quantity = item.Quantity
+                    };
+
+                    _context.OrderProductss.Add(orderProduct);
+                }
+
+                order.TotalAmount = totalAmount;
+
+                _context.SaveChanges();
+
+                transaction.Commit();
+
+                return Ok(new
+                {
+                    Message = "Order Placed Successfully",
+                    OrderId = order.OrderId,
+                    TotalAmount = order.TotalAmount
+                });
             }
-
-            order.TotalAmount = totalAmount;
-
-            _context.SaveChanges();
-
-            return Ok(new
+            catch
             {
-                Message = "Order Placed Successfully",
-                OrderId = order.OrderId,
-                TotalAmount = order.TotalAmount
-            });
+                transaction.Rollback();
+                throw;
+            }
         }
         [Authorize]
         [HttpGet("GetOrderDetails")]
