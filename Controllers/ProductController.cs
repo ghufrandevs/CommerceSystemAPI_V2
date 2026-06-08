@@ -33,7 +33,11 @@ namespace CommerceSystemAPI.Controllers
             };
             _context.Products.Add(product);
             _context.SaveChanges();
-            return Ok("Product Added Successfully");
+            return Ok(new
+            {
+                Message = "Product Added Successfully",
+                ProductId = product.ProductId
+            });
         }
         [AllowAnonymous]
         [HttpGet("GetAllProducts")]

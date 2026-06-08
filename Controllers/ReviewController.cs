@@ -93,6 +93,15 @@ namespace CommerceSystemAPI.Controllers
         [HttpGet("ViewProductReviews")]
         public IActionResult ViewProductReviews( int productId, int pageNumber, int pageSize)
         {
+            if (pageNumber < 1)
+            {
+                pageNumber = 1;
+            }
+
+            if (pageSize < 1)
+            {
+                pageSize = 10;
+            }
             var reviews = _context.Reviews
           .Where(r => r.ProductId == productId)
           .Skip((pageNumber - 1) * pageSize)
