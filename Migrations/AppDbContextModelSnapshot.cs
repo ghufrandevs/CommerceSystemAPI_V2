@@ -22,29 +22,6 @@ namespace CommerceSystemAPI.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("CommerceSystemAPI.Models.Category", b =>
-                {
-                    b.Property<int>("CategoryId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CategoryId"));
-
-                    b.Property<string>("CategoryName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.HasKey("CategoryId");
-
-                    b.ToTable("Categories");
-                });
-
             modelBuilder.Entity("CommerceSystemAPI.Models.Order", b =>
                 {
                     b.Property<int>("OrderId")
@@ -95,9 +72,6 @@ namespace CommerceSystemAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProductId"));
 
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
@@ -114,14 +88,7 @@ namespace CommerceSystemAPI.Migrations
                     b.Property<int>("Stock")
                         .HasColumnType("int");
 
-                    b.Property<int>("SupplierId")
-                        .HasColumnType("int");
-
                     b.HasKey("ProductId");
-
-                    b.HasIndex("CategoryId");
-
-                    b.HasIndex("SupplierId");
 
                     b.ToTable("Products");
                 });
@@ -156,30 +123,6 @@ namespace CommerceSystemAPI.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Reviews");
-                });
-
-            modelBuilder.Entity("CommerceSystemAPI.Models.Supplier", b =>
-                {
-                    b.Property<int>("SupplierId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SupplierId"));
-
-                    b.Property<string>("ContactEmail")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Phone")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SupplierName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("SupplierId");
-
-                    b.ToTable("Suppliers");
                 });
 
             modelBuilder.Entity("CommerceSystemAPI.Models.User", b =>
@@ -251,25 +194,6 @@ namespace CommerceSystemAPI.Migrations
                     b.Navigation("Product");
                 });
 
-            modelBuilder.Entity("CommerceSystemAPI.Models.Product", b =>
-                {
-                    b.HasOne("CommerceSystemAPI.Models.Category", "Category")
-                        .WithMany("Products")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("CommerceSystemAPI.Models.Supplier", "Supplier")
-                        .WithMany("Products")
-                        .HasForeignKey("SupplierId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Category");
-
-                    b.Navigation("Supplier");
-                });
-
             modelBuilder.Entity("CommerceSystemAPI.Models.Review", b =>
                 {
                     b.HasOne("CommerceSystemAPI.Models.Product", "Product")
@@ -289,11 +213,6 @@ namespace CommerceSystemAPI.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("CommerceSystemAPI.Models.Category", b =>
-                {
-                    b.Navigation("Products");
-                });
-
             modelBuilder.Entity("CommerceSystemAPI.Models.Order", b =>
                 {
                     b.Navigation("OrderProduct");
@@ -304,11 +223,6 @@ namespace CommerceSystemAPI.Migrations
                     b.Navigation("OrderProductss");
 
                     b.Navigation("Reviews");
-                });
-
-            modelBuilder.Entity("CommerceSystemAPI.Models.Supplier", b =>
-                {
-                    b.Navigation("Products");
                 });
 
             modelBuilder.Entity("CommerceSystemAPI.Models.User", b =>
