@@ -17,6 +17,10 @@ namespace CommerceSystemAPI
 
         public DbSet<Review> Reviews { get; set; }
 
+        public DbSet<Category> Categories { get; set; }
+
+        public DbSet<Supplier> Suppliers { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
