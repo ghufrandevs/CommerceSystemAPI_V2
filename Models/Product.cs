@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -26,8 +27,17 @@ namespace CommerceSystemAPI.Models
 
         public decimal OverallRating { get; set; }
 
-        [JsonIgnore]
+        [ForeignKey("Category")]
+        public int CategoryId { get; set; }
 
+        public virtual Category? Category { get; set; }
+
+        [ForeignKey("Supplier")]
+        public int SupplierId { get; set; }
+
+        public virtual Supplier? Supplier { get; set; }
+
+        [JsonIgnore]
         public virtual ICollection<Review> Reviews { get;set; }
 
         [JsonIgnore]
