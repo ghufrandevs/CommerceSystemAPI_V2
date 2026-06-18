@@ -48,7 +48,8 @@ namespace CommerceSystemAPI
             builder.Services.AddScoped<OrderService>();
             builder.Services.AddScoped<CategoryRepository>();
             builder.Services.AddScoped<CategoryService>();
-
+            builder.Services.AddScoped<SupplierRepository>();
+            builder.Services.AddScoped<SupplierService>();
 
             var jwtKey = builder.Configuration["Jwt:Key"]!;
             builder.Services.AddAuthentication(options =>

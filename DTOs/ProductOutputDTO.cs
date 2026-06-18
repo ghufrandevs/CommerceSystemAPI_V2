@@ -13,5 +13,9 @@
         public int Stock { get; set; }
 
         public decimal OverallRating { get; set; }
+
+        public string? CategoryName { get; set; }
+
+        public string? SupplierName { get; set; }
     }
 }

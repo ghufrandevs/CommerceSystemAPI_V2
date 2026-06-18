@@ -16,5 +16,11 @@ namespace CommerceSystemAPI.DTOs
         [Required]
         [Range(0, int.MaxValue)]
         public int Stock { get; set; }
+
+        [Required]
+        public int CategoryId { get; set; }
+
+        [Required]
+        public int SupplierId { get; set; }
     }
 }
