@@ -34,8 +34,7 @@ namespace CommerceSystemAPI.Controllers
         [HttpGet("GetOrderById")]
         public IActionResult GetOrderById(int id)
         {
-            var order =
-                _orderService.GetOrderById(id);
+            var order = _orderService.GetOrderById(id);
 
             if (order == null)
             {
@@ -49,8 +48,7 @@ namespace CommerceSystemAPI.Controllers
         [HttpGet("ViewMyOrders")]
         public IActionResult ViewMyOrders()
         {
-            int userId = int.Parse(
-                User.FindFirst( ClaimTypes.NameIdentifier)!.Value);
+            int userId = int.Parse(User.FindFirst( ClaimTypes.NameIdentifier)!.Value);
 
             return Ok( _orderService.ViewMyOrders(userId));
         }
@@ -59,8 +57,7 @@ namespace CommerceSystemAPI.Controllers
         [HttpPost("PlaceOrder")]
         public IActionResult PlaceOrder(PlaceOrderDTO dto)
         {
-            int userId = int.Parse(
-                User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
             var user = _context.Users.Find(userId);
 
@@ -74,8 +71,7 @@ namespace CommerceSystemAPI.Controllers
 
             if (duplicateProducts)
             {
-                return BadRequest(
-                    "Duplicate products are not allowed in the same order");
+                return BadRequest("Duplicate products are not allowed in the same order");
             }
             decimal totalAmount = 0;
 

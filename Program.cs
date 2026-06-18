@@ -23,7 +23,7 @@ namespace CommerceSystemAPI
             builder.Host.UseSerilog();
             // Add services to the container.
             builder.Services.AddControllers();
-
+            builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
             ///register services for dependency injection
             builder.Services.AddDbContext<AppDbContext>(options =>
             {
@@ -46,6 +46,8 @@ namespace CommerceSystemAPI
             builder.Services.AddScoped<OrderProductsService>();
             builder.Services.AddScoped<OrderRepository>();
             builder.Services.AddScoped<OrderService>();
+            builder.Services.AddScoped<CategoryRepository>();
+            builder.Services.AddScoped<CategoryService>();
 
 
             var jwtKey = builder.Configuration["Jwt:Key"]!;
